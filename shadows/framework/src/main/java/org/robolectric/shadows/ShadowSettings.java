@@ -186,7 +186,7 @@ public class ShadowSettings {
     }
   }
 
-  @Implements(value = Settings.Global.class, inheritImplementationMethods = true, minSdk = JELLY_BEAN_MR1)
+  @Implements(value = Settings.Global.class, minSdk = JELLY_BEAN_MR1)
   public static class ShadowGlobal extends ShadowSystem {
     @Implementation
     public static boolean putInt(ContentResolver cr, String name, int value) {
