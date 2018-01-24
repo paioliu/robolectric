@@ -220,19 +220,6 @@ public class ShadowWrangler implements ClassHandler {
       Method method = findShadowMethod(definingClass, name, paramTypes, shadowInfo, shadowClass);
       if (method == null) {
         return shadowInfo.callThroughByDefault ? CALL_REAL_CODE : DO_NOTHING_METHOD;
-      }
-
-      Class<?> declaredShadowedClass = getShadowedClass(method);
-      if (declaredShadowedClass.equals(Object.class)) {
-        // e.g. for equals(), hashCode(), toString()
-        throw new IllegalStateException("111 method " + method + " on " + declaredShadowedClass);
-        // return CALL_REAL_CODE;
-      }
-
-      boolean shadowClassMismatch = !declaredShadowedClass.equals(definingClass);
-      if (shadowClassMismatch && !shadowInfo.inheritImplementationMethods) {
-        throw new IllegalStateException("222 method " + method + " on " + declaredShadowedClass);
-        // return CALL_REAL_CODE;
       } else {
         return method;
       }
