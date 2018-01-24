@@ -5,6 +5,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.robolectric.shadow.api.Shadow.directlyOn;
 
 import java.io.IOException;
 import org.junit.Before;
@@ -191,13 +192,18 @@ public class ShadowWranglerIntegrationTest {
   public static class ShadowThrowInRealMethod {
   }
 
-  @Test @SandboxConfig(shadows = {ShadowOfChildWithInheritance.class, ShadowOfParent.class})
-  public void whenInheritanceIsEnabled_shouldUseShadowSuperclassMethods() throws Exception {
-    assertThat(new Child().get()).isEqualTo("from shadow of parent");
+  @Test @SandboxConfig(shadows = {Shadow2OfChild.class, ShadowOfParent.class})
+  public void whenShadowMethodIsOverriddenInShadowWithSameShadowedClass_shouldUseOverriddenMethod() throws Exception {
+    assertThat(new Child().get()).isEqualTo("get from Shadow2OfChild");
   }
 
-  @Test @SandboxConfig(shadows = {ShadowOfChildWithoutInheritance.class, ShadowOfParent.class})
-  public void whenInheritanceIsDisabled_shouldUseShadowSuperclassMethods() throws Exception {
+  @Test @SandboxConfig(shadows = {Shadow22OfChild.class, ShadowOfParent.class})
+  public void whenShadowMethodIsNotOverriddenInShadowWithSameShadowedClass_shouldUseOverriddenMethod() throws Exception {
+    assertThat(new Child().get()).isEqualTo("get from Shadow2OfChild");
+  }
+
+  @Test @SandboxConfig(shadows = {Shadow3OfChild.class, ShadowOfParent.class})
+  public void whenShadowMethodIsOverriddenInShadowOfAnotherClass_shouldNotUseShadowSuperclassMethods() throws Exception {
     assertThat(new Child().get()).isEqualTo("from child (from shadow of parent)");
   }
 
@@ -224,12 +230,38 @@ public class ShadowWranglerIntegrationTest {
     }
   }
 
-  @Implements(value = Child.class, inheritImplementationMethods = true)
-  public static class ShadowOfChildWithInheritance extends ShadowOfParent {
+  @Implements(value = Child.class)
+  public static class ShadowOfChild extends ShadowOfParent {
+    @Implementation
+    @Override
+    protected String get() {
+      return "get from ShadowOfChild";
+    }
   }
 
-  @Implements(value = Child.class, inheritImplementationMethods = false)
-  public static class ShadowOfChildWithoutInheritance extends ShadowOfParent {
+  @Implements(value = Child.class)
+  public static class Shadow2OfChild extends ShadowOfChild {
+    @Implementation
+    @Override
+    protected String get() {
+      return "get from Shadow2OfChild";
+    }
+  }
+
+  @Implements(value = Child.class)
+  public static class Shadow22OfChild extends Shadow2OfChild {
+  }
+
+  public static class SomethingOtherThanChild extends Child {
+  }
+
+  @Implements(value = SomethingOtherThanChild.class)
+  public static class Shadow3OfChild extends ShadowOfChild {
+    @Implementation
+    @Override
+    protected String get() {
+      return "get from Shadow3OfChild";
+    }
   }
 
   private ShadowFoo shadowOf(Foo foo) {

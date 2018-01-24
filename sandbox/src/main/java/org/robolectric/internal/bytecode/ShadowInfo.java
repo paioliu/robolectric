@@ -37,6 +37,10 @@ public class ShadowInfo {
     return minSdk <= sdkInt && (maxSdk == -1 || maxSdk >= sdkInt);
   }
 
+  public boolean isShadowOf(Class<?> clazz) {
+    return shadowedClassName.equals(clazz.getName());
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;

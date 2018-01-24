@@ -60,6 +60,9 @@ public class ShadowWrangler implements ClassHandler {
     }
   }
 
+  public static final Implementation IMPLEMENTATION_DEFAULTS =
+      ReflectionHelpers.defaultsFor(Implementation.class);
+
   private static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
   private static final boolean STRIP_SHADOW_STACK_TRACES = true;
   static final Object NO_SHADOW = new Object();
@@ -214,7 +217,7 @@ public class ShadowWrangler implements ClassHandler {
         throw new IllegalStateException(e);
       }
 
-      Method method = findShadowMethod(shadowInfo, shadowClass, name, paramTypes);
+      Method method = findShadowMethod(definingClass, name, paramTypes, shadowInfo, shadowClass);
       if (method == null) {
         return shadowInfo.callThroughByDefault ? CALL_REAL_CODE : DO_NOTHING_METHOD;
       }
@@ -222,35 +225,57 @@ public class ShadowWrangler implements ClassHandler {
       Class<?> declaredShadowedClass = getShadowedClass(method);
       if (declaredShadowedClass.equals(Object.class)) {
         // e.g. for equals(), hashCode(), toString()
-        return CALL_REAL_CODE;
+        throw new IllegalStateException("111 method " + method + " on " + declaredShadowedClass);
+        // return CALL_REAL_CODE;
       }
 
       boolean shadowClassMismatch = !declaredShadowedClass.equals(definingClass);
       if (shadowClassMismatch && !shadowInfo.inheritImplementationMethods) {
-        return CALL_REAL_CODE;
+        throw new IllegalStateException("222 method " + method + " on " + declaredShadowedClass);
+        // return CALL_REAL_CODE;
       } else {
         return method;
       }
     }
   }
 
-  private Method findShadowMethod(ShadowInfo config, Class<?> shadowClass, String name, Class<?>[] types) {
-    Method method = findShadowMethodInternal(shadowClass, name, types);
+  /**
+   * Searches for an `@Implementation` method on a given shadow class.
+   *
+   * If the shadow class allows loose signatures, search for them.
+   *
+   * If the shadow class doesn't have such a method, but does hav a superclass which implements the
+   * same class as it, recursively call {@link #findShadowMethod(Class, String, Class[], ShadowInfo,
+   * Class)} with the shadow superclass.
+   */
+  private Method findShadowMethod(Class<?> definingClass, String name, Class<?>[] types,
+      ShadowInfo shadowInfo, Class<?> shadowClass) {
+    Method method = findShadowMethodDeclaredOnClass(shadowClass, name, types);
 
-    if (method == null && config.looseSignatures) {
+    if (method == null && shadowInfo.looseSignatures) {
       Class<?>[] genericTypes = MethodType.genericMethodType(types.length).parameterArray();
-      method = findShadowMethodInternal(shadowClass, name, genericTypes);
+      method = findShadowMethodDeclaredOnClass(shadowClass, name, genericTypes);
     }
 
-    Class<?> superclass;
-    if (method == null && config.inheritImplementationMethods && (superclass = shadowClass.getSuperclass()) != null) {
-      return findShadowMethod(config, superclass, name, types);
+    if (method != null) {
+      return method;
+    } else {
+      // if the shadow's superclass shadows the same class as this shadow, then recurse.
+      // Buffalo buffalo buffalo buffalo buffalo buffalo buffalo.
+      Class<?> shadowSuperclass = shadowClass.getSuperclass();
+      if (shadowSuperclass != null && !shadowSuperclass.equals(Object.class)) {
+        ShadowInfo shadowSuperclassInfo = ShadowMap.obtainShadowInfo(shadowSuperclass);
+        if (shadowSuperclassInfo.isShadowOf(definingClass)) {
+          return findShadowMethod(definingClass, name, types, shadowSuperclassInfo,
+              shadowSuperclass);
+        }
+      }
     }
 
-    return method;
+    return null;
   }
 
-  private Method findShadowMethodInternal(Class<?> shadowClass, String methodName, Class<?>[] paramClasses) {
+  private Method findShadowMethodDeclaredOnClass(Class<?> shadowClass, String methodName, Class<?>[] paramClasses) {
     try {
       Method method = shadowClass.getDeclaredMethod(methodName, paramClasses);
       method.setAccessible(true);
@@ -304,7 +329,7 @@ public class ShadowWrangler implements ClassHandler {
     }
     Implementation implementation = method.getAnnotation(Implementation.class);
     return implementation == null
-        ? ReflectionHelpers.defaultsFor(Implementation.class)
+        ? IMPLEMENTATION_DEFAULTS
         : implementation;
   }
 

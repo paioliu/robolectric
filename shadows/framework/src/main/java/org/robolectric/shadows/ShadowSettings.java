@@ -18,6 +18,9 @@ public class ShadowSettings {
   public static class ShadowSystem {
     private static final WeakHashMap<ContentResolver, Map<String, Object>> dataMap = new WeakHashMap<ContentResolver, Map<String, Object>>();
 
+    // Note that @Implementation methods in this class should be mirrored
+    // in ShadowSecure and ShadowGlobal!
+
     @Implementation
     public static boolean putInt(ContentResolver cr, String name, int value) {
       get(cr).put(name, value);
@@ -113,19 +116,137 @@ public class ShadowSettings {
     private static Map<String, Object> get(ContentResolver cr) {
       Map<String, Object> map = dataMap.get(cr);
       if (map == null) {
-        map = new HashMap<String, Object>();
+        map = new HashMap<>();
         dataMap.put(cr, map);
       }
       return map;
     }
   }
 
-  @Implements(value = Settings.Secure.class, inheritImplementationMethods = true)
+  @Implements(value = Settings.Secure.class)
   public static class ShadowSecure extends ShadowSystem {
+    @Implementation
+    public static boolean putInt(ContentResolver cr, String name, int value) {
+      return ShadowSystem.putInt(cr, name, value);
+    }
+
+    @Implementation
+    public static int getInt(ContentResolver cr, String name, int def) {
+      return ShadowSystem.getInt(cr, name, def);
+    }
+
+    @Implementation
+    public static int getInt(ContentResolver cr, String name) throws Settings.SettingNotFoundException {
+      return ShadowSystem.getInt(cr, name);
+    }
+
+    @Implementation
+    public static boolean putString(ContentResolver cr, String name, String value) {
+      return ShadowSystem.putString(cr, name, value);
+    }
+
+    @Implementation
+    public static String getString(ContentResolver cr, String name) {
+      return ShadowSystem.getString(cr, name);
+    }
+
+    @Implementation(minSdk = JELLY_BEAN_MR1)
+    public static String getStringForUser(ContentResolver cr, String name, int userHandle) {
+      return ShadowSystem.getStringForUser(cr, name, userHandle);
+    }
+
+    @Implementation
+    public static boolean putLong(ContentResolver cr, String name, long value) {
+      return ShadowSystem.putLong(cr, name, value);
+    }
+
+    @Implementation
+    public static long getLong(ContentResolver cr, String name, long def) {
+      return ShadowSystem.getLong(cr, name, def);
+    }
+
+    @Implementation
+    public static long getLong(ContentResolver cr, String name) throws Settings.SettingNotFoundException {
+      return ShadowSystem.getLong(cr, name);
+    }
+
+    @Implementation
+    public static boolean putFloat(ContentResolver cr, String name, float value) {
+      return ShadowSystem.putFloat(cr, name, value);
+    }
+
+    @Implementation
+    public static float getFloat(ContentResolver cr, String name, float def) {
+      return ShadowSystem.getFloat(cr, name, def);
+    }
+
+    @Implementation
+    public static float getFloat(ContentResolver cr, String name) throws Settings.SettingNotFoundException {
+      return ShadowSystem.getFloat(cr, name);
+    }
   }
 
   @Implements(value = Settings.Global.class, inheritImplementationMethods = true, minSdk = JELLY_BEAN_MR1)
   public static class ShadowGlobal extends ShadowSystem {
+    @Implementation
+    public static boolean putInt(ContentResolver cr, String name, int value) {
+      return ShadowSystem.putInt(cr, name, value);
+    }
+
+    @Implementation
+    public static int getInt(ContentResolver cr, String name, int def) {
+      return ShadowSystem.getInt(cr, name, def);
+    }
+
+    @Implementation
+    public static int getInt(ContentResolver cr, String name) throws Settings.SettingNotFoundException {
+      return ShadowSystem.getInt(cr, name);
+    }
+
+    @Implementation
+    public static boolean putString(ContentResolver cr, String name, String value) {
+      return ShadowSystem.putString(cr, name, value);
+    }
+
+    @Implementation
+    public static String getString(ContentResolver cr, String name) {
+      return ShadowSystem.getString(cr, name);
+    }
+
+    @Implementation(minSdk = JELLY_BEAN_MR1)
+    public static String getStringForUser(ContentResolver cr, String name, int userHandle) {
+      return ShadowSystem.getStringForUser(cr, name, userHandle);
+    }
+
+    @Implementation
+    public static boolean putLong(ContentResolver cr, String name, long value) {
+      return ShadowSystem.putLong(cr, name, value);
+    }
+
+    @Implementation
+    public static long getLong(ContentResolver cr, String name, long def) {
+      return ShadowSystem.getLong(cr, name, def);
+    }
+
+    @Implementation
+    public static long getLong(ContentResolver cr, String name) throws Settings.SettingNotFoundException {
+      return ShadowSystem.getLong(cr, name);
+    }
+
+    @Implementation
+    public static boolean putFloat(ContentResolver cr, String name, float value) {
+      return ShadowSystem.putFloat(cr, name, value);
+    }
+
+    @Implementation
+    public static float getFloat(ContentResolver cr, String name, float def) {
+      return ShadowSystem.getFloat(cr, name, def);
+    }
+
+    @Implementation
+    public static float getFloat(ContentResolver cr, String name) throws Settings.SettingNotFoundException {
+      return ShadowSystem.getFloat(cr, name);
+    }
   }
 
   /**
